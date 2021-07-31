@@ -166,7 +166,7 @@ class OrderPosition(models.Model):
     )
     count = models.PositiveSmallIntegerField(
         'число продуктов',
-        # validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(1)],
     )
 
     class Meta:

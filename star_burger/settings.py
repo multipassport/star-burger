@@ -123,3 +123,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),
     os.path.join(BASE_DIR, "bundles"),
 ]
+
+PHONENUMBER_DB_FORMAT = 'INTERNATIONAL'
+
+PHONENUMBER_DEFAULT_REGION = 'RU'
