@@ -62,16 +62,15 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
+    cart = request.data
     try:
-        cart = request.data
-        print(cart)
-        # cart = json.loads(request.body.decode())
-    except ValueError:
-        return JsonResponse({
-            'error': 'While making an order an exception occured',
-        })
-    if not cart['products']:
-        raise ValueError
+        products = cart['products']
+    except KeyError:
+        return Response({'products': 'Order should contain a \'products\' key'})
+    if not products:
+        return Response({'products': 'This field cannot be empty.'})
+    if not isinstance(products, list):
+        return Response({'products': 'This field should receive a list.'})
     order = Order.objects.create(
         first_name=cart['firstname'],
         last_name=cart['lastname'],
