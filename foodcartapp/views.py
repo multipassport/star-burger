@@ -2,6 +2,8 @@ import json
 
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from .models import Product, Order, OrderPosition
 
@@ -58,9 +60,12 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
     try:
-        cart = json.loads(request.body.decode())
+        cart = request.data
+        print(cart)
+        # cart = json.loads(request.body.decode())
     except ValueError:
         return JsonResponse({
             'error': 'While making an order an exception occured',
@@ -79,4 +84,4 @@ def register_order(request):
             product_id=position['product'],
             count=position['quantity'],
         )
-    return JsonResponse({})
+    return Response(cart)
