@@ -2,6 +2,7 @@ import json
 
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -66,11 +67,20 @@ def register_order(request):
     try:
         products = cart['products']
     except KeyError:
-        return Response({'products': 'Order should contain a \'products\' key'})
+        return Response(
+            {'products': 'Order should contain a \'products\' key'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     if not products:
-        return Response({'products': 'This field cannot be empty.'})
+        return Response(
+            {'products': 'This field cannot be empty.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     if not isinstance(products, list):
-        return Response({'products': 'This field should receive a list.'})
+        return Response(
+            {'products': 'This field should receive a list.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     order = Order.objects.create(
         first_name=cart['firstname'],
         last_name=cart['lastname'],
