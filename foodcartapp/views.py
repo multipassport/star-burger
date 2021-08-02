@@ -1,8 +1,9 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from .models import Product, Order, OrderPosition
 
@@ -14,12 +15,19 @@ class OrderPositionSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderPositionSerializer(many=True, allow_empty=False)
+    products = OrderPositionSerializer(
+        many=True, allow_empty=False, write_only=True,
+    )
 
     class Meta:
         model = Order
         fields = [
-            'firstname', 'lastname', 'phonenumber', 'address', 'products',
+            'id',
+            'firstname',
+            'lastname',
+            'phonenumber',
+            'address',
+            'products',
         ]
 
 
@@ -95,6 +103,4 @@ def register_order(request):
     ]
     OrderPosition.objects.bulk_create(positions)
 
-    return Response({
-            'order_id': order.id,
-        })
+    return Response(OrderSerializer(order).data)
