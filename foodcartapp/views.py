@@ -1,12 +1,26 @@
-import json
-
 from django.http import JsonResponse
 from django.templatetags.static import static
-from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
 
 from .models import Product, Order, OrderPosition
+
+
+class OrderPositionSerializer(ModelSerializer):
+    class Meta:
+        model = OrderPosition
+        fields = ['product', 'quantity']
+
+
+class OrderSerializer(ModelSerializer):
+    products = OrderPositionSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = [
+            'firstname', 'lastname', 'phonenumber', 'address', 'products',
+        ]
 
 
 def banners_list_api(request):
@@ -63,34 +77,24 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    cart = request.data
-    try:
-        products = cart['products']
-    except KeyError:
-        return Response(
-            {'products': 'Order should contain a \'products\' key'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    if not products:
-        return Response(
-            {'products': 'This field cannot be empty.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    if not isinstance(products, list):
-        return Response(
-            {'products': 'This field should receive a list.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    valid_data = serializer.validated_data
+
     order = Order.objects.create(
-        first_name=cart['firstname'],
-        last_name=cart['lastname'],
-        phone_number=cart['phonenumber'],
-        address=cart['address'],
+        firstname=valid_data['firstname'],
+        lastname=valid_data['lastname'],
+        phonenumber=valid_data['phonenumber'],
+        address=valid_data['address'],
     )
-    for position in cart['products']:
-        OrderPosition.objects.create(
-            order_id=order.id,
-            product_id=position['product'],
-            count=position['quantity'],
-        )
-    return Response(cart)
+
+    positions = [
+        OrderPosition(order=order, **fields)
+        for fields in valid_data['products']
+    ]
+    OrderPosition.objects.bulk_create(positions)
+
+    return Response({
+            'order_id': order.id,
+        })
