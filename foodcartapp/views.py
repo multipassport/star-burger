@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import serializers
@@ -84,6 +85,7 @@ def product_list_api(request):
 
 
 @api_view(['POST'])
+@transaction.atomic
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -96,7 +98,6 @@ def register_order(request):
         phonenumber=valid_data['phonenumber'],
         address=valid_data['address'],
     )
-
     positions = [
         OrderPosition(order=order, **fields)
         for fields in valid_data['products']
