@@ -157,7 +157,12 @@ class Order(models.Model):
         'статус',
         max_length=12,
         choices=STATUS,
-        default='UNANSWERED'
+        default='UNANSWERED',
+    )
+    note = models.TextField(
+        'комментарий к заказу',
+        max_length=200,
+        blank=True,
     )
 
     objects = OrderPositionQuerySet.as_manager()
