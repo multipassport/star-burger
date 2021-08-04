@@ -101,6 +101,9 @@ def register_order(request):
         OrderPosition(order=order, **fields)
         for fields in valid_data['products']
     ]
+    for position in positions:
+        position.get_price()
+
     OrderPosition.objects.bulk_create(positions)
 
     return Response(OrderSerializer(order).data)
