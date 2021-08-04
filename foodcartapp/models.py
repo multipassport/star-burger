@@ -131,6 +131,11 @@ class OrderPositionQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
+    STATUS = (
+        ('UNANSWERED', 'Не обработан'),
+        ('EN_ROUTE', 'В пути'),
+        ('COMPLETED', 'Выполнен'),
+    )
     firstname = models.CharField(
         'имя',
         max_length=50,
@@ -147,6 +152,12 @@ class Order(models.Model):
     address = models.CharField(
         'адрес',
         max_length=100,
+    )
+    status = models.CharField(
+        'статус',
+        max_length=12,
+        choices=STATUS,
+        default='UNANSWERED'
     )
 
     objects = OrderPositionQuerySet.as_manager()
