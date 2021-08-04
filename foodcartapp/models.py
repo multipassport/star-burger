@@ -137,6 +137,10 @@ class Order(models.Model):
         ('EN_ROUTE', 'В пути'),
         ('COMPLETED', 'Выполнен'),
     )
+    PAYMENT_METHODS = (
+        ('CASH', 'Наличными'),
+        ('CARD', 'Электронно'),
+    )
     firstname = models.CharField(
         'имя',
         max_length=50,
@@ -165,6 +169,12 @@ class Order(models.Model):
         'комментарий к заказу',
         max_length=200,
         blank=True,
+    )
+    payment_method = models.CharField(
+        'Способ оплаты',
+        max_length=5,
+        choices=PAYMENT_METHODS,
+        default='CASH',
     )
 
     created_at = models.DateTimeField(
