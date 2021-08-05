@@ -192,6 +192,12 @@ class Order(models.Model):
         null=True,
     )
 
+    restaurants = models.ManyToManyField(
+        Restaurant,
+        related_name='orders',
+        verbose_name='ресторан',
+    )
+
     objects = OrderPositionQuerySet.as_manager()
 
     class Meta:

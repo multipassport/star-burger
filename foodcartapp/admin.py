@@ -113,7 +113,6 @@ class ProductAdmin(admin.ModelAdmin):
 class OrderPositionInline(admin.TabularInline):
     model = OrderPosition
     extra = 1
-    exclude = ('price',)
 
 
 @admin.register(Order)

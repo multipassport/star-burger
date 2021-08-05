@@ -1,12 +1,11 @@
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
-from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer, Serializer
+from rest_framework.serializers import ModelSerializer
 
-from .models import Product, Order, OrderPosition
+from .models import Product, Order, OrderPosition, RestaurantMenuItem
 
 
 class OrderPositionSerializer(ModelSerializer):
@@ -102,9 +101,25 @@ def register_order(request):
         OrderPosition(order=order, **fields)
         for fields in valid_data['products']
     ]
+
+    products = [item['product'] for item in valid_data['products']]
+    choose_restaurant(products, order)
+
     for position in positions:
         position.get_price()
 
     OrderPosition.objects.bulk_create(positions)
 
     return Response(OrderSerializer(order).data)
+
+
+def choose_restaurant(products, order):
+    products_restaurants = []
+    for product in products:
+        restaurants = [item.restaurant for item in  RestaurantMenuItem.objects.filter(product__exact=product)]
+        products_restaurants.append(set(restaurants))
+    first_restaurant, *others_restaurants = products_restaurants
+    suitable_restaurants = first_restaurant.intersection(*others_restaurants)
+
+    order.restaurants.set(suitable_restaurants)
+    order.save()
