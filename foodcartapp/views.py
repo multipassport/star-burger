@@ -1,3 +1,5 @@
+import requests
+
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
@@ -6,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
 from .models import Product, Order, OrderPosition, RestaurantMenuItem
+from geocoder.models import Location
 
 
 class OrderPositionSerializer(ModelSerializer):
@@ -110,6 +113,8 @@ def register_order(request):
 
     OrderPosition.objects.bulk_create(positions)
 
+    create_location(valid_data['address'])
+
     return Response(OrderSerializer(order).data)
 
 
@@ -124,3 +129,28 @@ def choose_restaurant(products, order):
     order.restaurants.set(suitable_restaurants)
     order.save()
 
+
+def create_location(address):
+    latitude, longitude = fetch_coordinates(address)
+    location, created = Location.objects.get_or_create(address=address)
+    if not created:
+        return None
+    location.latitude = latitude
+    location.longitude = longitude
+    location.save()
+
+
+def fetch_coordinates(place):
+    base_url = 'https://geocode-maps.yandex.ru/1.x'
+    payload = {
+        'geocode': place, 'apikey': YANDEX_GEOCODE_APIKEY, 'format': 'json'
+    }
+
+    response = requests.get(base_url, params=payload)
+    response.raise_for_status()
+
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+    most_relevant = found_places[0]
+
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(' ')
+    return lat, lon

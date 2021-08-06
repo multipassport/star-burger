@@ -1,5 +1,3 @@
-import requests
-
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -11,7 +9,7 @@ from geopy import distance
 from operator import itemgetter
 
 from foodcartapp.models import Product, Restaurant, Order
-from star_burger.settings import YANDEX_GEOCODE_APIKEY
+from geocoder.models import Location
 
 
 class Login(forms.Form):
@@ -137,18 +135,9 @@ def serialize_restaurant(order_address, restaurant):
 
 
 def calculate_distance(first_address, second_address):
-    order_location = fetch_coordinates(YANDEX_GEOCODE_APIKEY, first_address)
-    restaurant_location = fetch_coordinates(YANDEX_GEOCODE_APIKEY, second_address)
-    order_distance = distance.distance(order_location, restaurant_location).km
+    order_location, _ = Location.objects.get_or_create(address=first_address)
+    restaurant_location, _ = Location.objects.get_or_create(address=second_address)
+    order_coordinates = order_location.latitude, order_location.longitude
+    restaurant_coordinates = restaurant_location.latitude, restaurant_location.longitude
+    order_distance = distance.distance(order_coordinates, restaurant_coordinates).km
     return f'{order_distance:.3f} км'
-
-
-def fetch_coordinates(apikey, place):
-    base_url = 'https://geocode-maps.yandex.ru/1.x'
-    params = {'geocode': place, 'apikey': apikey, 'format': 'json'}
-    response = requests.get(base_url, params=params)
-    response.raise_for_status()
-    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-    most_relevant = found_places[0]
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(' ')
-    return lat, lon
