@@ -47,6 +47,11 @@ python -m venv venv
 - Windows: `.\venv\Scripts\activate`
 - MacOS/Linux: `source venv/bin/activate`
 
+Создайте файл `.env` с переменной
+```sh
+YANDEX_GEOCODE_APIKEY=[ваш_ключ_апи_яндекс](https://developer.tech.yandex.ru/services/)
+
+```
 
 Установите зависимости в виртуальное окружение:
 ```sh

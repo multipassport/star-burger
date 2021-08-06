@@ -9,6 +9,7 @@ from rest_framework.serializers import ModelSerializer
 
 from .models import Product, Order, OrderPosition, RestaurantMenuItem
 from geocoder.models import Location
+from star_burger.settings import YANDEX_GEOCODE_APIKEY
 
 
 class OrderPositionSerializer(ModelSerializer):
