@@ -28,8 +28,8 @@
     {% for item in order_items %}
       <tr>
         <td>{{ item.id }}</td>
-        <td>{{ item.get_status_display }}</td>
-        <td>{{ item.get_payment_method_display }}</td>
+        <td>{{ item.status }}</td>
+        <td>{{ item.payment_method }}</td>
         <td>{{ item.cost }}</td>
         <td>{{ item.firstname }} {{ item.lastname }}</td>
         <td>{{ item.phonenumber }}</td>
@@ -37,9 +37,12 @@
         <td>{{ item.note }}</td>
         <td><a href="{% url 'admin:foodcartapp_order_change' item.id %}?next={{ request.path|urlencode }}">Редактировать</a></td>
         <td>
-          {% for restaurant in item.restaurants.all %}
-            {{ restaurant.name }}
-          {% endfor %}
+          <details>
+            <summary>Развернуть</summary>
+            {% for restaurant in item.restaurants %}
+              <li>{{ restaurant.name }} {{ restaurant.distance }}</li>
+            {% endfor %}
+          </details>
         </td>
       </tr>
     {% endfor %}

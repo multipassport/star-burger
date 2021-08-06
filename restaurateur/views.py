@@ -1,14 +1,17 @@
+import requests
+
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-
+from geopy import distance
+from operator import itemgetter
 
 from foodcartapp.models import Product, Restaurant, Order
+from star_burger.settings import YANDEX_GEOCODE_APIKEY
 
 
 class Login(forms.Form):
@@ -97,7 +100,55 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.total_cost()
+    orders = Order.objects.get_total_cost()
     return render(request, template_name='order_items.html', context={
-        'order_items': orders,
+        'order_items': [serialize_order(order) for order in orders],
     })
+
+
+def serialize_order(order):
+    serialized_order = {
+        'id': order.id,
+        'status': order.get_status_display(),
+        'payment_method': order.get_payment_method_display(),
+        'cost': order.cost,
+        'firstname': order.firstname,
+        'lastname': order.lastname,
+        'phonenumber': order.phonenumber,
+        'address': order.address,
+        'note': order.note,
+    }
+    restaurants = [
+        serialize_restaurant(order.address, restaurant)
+        for restaurant in order.restaurants.all()
+    ]
+    serialized_order['restaurants'] = sorted(
+        restaurants, key=itemgetter('distance')
+    )
+
+    return serialized_order
+
+
+def serialize_restaurant(order_address, restaurant):
+    return {
+        'name': restaurant.name,
+        'distance': (calculate_distance(order_address, restaurant.address))
+    }
+
+
+def calculate_distance(first_address, second_address):
+    order_location = fetch_coordinates(YANDEX_GEOCODE_APIKEY, first_address)
+    restaurant_location = fetch_coordinates(YANDEX_GEOCODE_APIKEY, second_address)
+    order_distance = distance.distance(order_location, restaurant_location).km
+    return f'{order_distance:.3f} км'
+
+
+def fetch_coordinates(apikey, place):
+    base_url = 'https://geocode-maps.yandex.ru/1.x'
+    params = {'geocode': place, 'apikey': apikey, 'format': 'json'}
+    response = requests.get(base_url, params=params)
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(' ')
+    return lat, lon

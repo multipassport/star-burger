@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models import F, Sum
 from django.core.validators import MinValueValidator, MaxLengthValidator
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
@@ -112,7 +111,7 @@ class RestaurantMenuItem(models.Model):
     availability = models.BooleanField(
         'в продаже',
         default=True,
-        db_index=True
+        db_index=True,
     )
 
     class Meta:
@@ -127,8 +126,11 @@ class RestaurantMenuItem(models.Model):
 
 
 class OrderPositionQuerySet(models.QuerySet):
-    def total_cost(self):
-        return self.annotate(cost=Sum(F('positions__price')))
+    def get_total_cost(self):
+        return (
+            self.annotate(cost=models.Sum(models.F('positions__price')))
+            .prefetch_related('restaurants')
+        )
 
 
 class Order(models.Model):

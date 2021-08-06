@@ -116,10 +116,11 @@ def register_order(request):
 def choose_restaurant(products, order):
     products_restaurants = []
     for product in products:
-        restaurants = [item.restaurant for item in  RestaurantMenuItem.objects.filter(product__exact=product)]
+        restaurants = [item.restaurant for item in RestaurantMenuItem.objects.filter(product__exact=product)]
         products_restaurants.append(set(restaurants))
     first_restaurant, *others_restaurants = products_restaurants
     suitable_restaurants = first_restaurant.intersection(*others_restaurants)
 
     order.restaurants.set(suitable_restaurants)
     order.save()
+
