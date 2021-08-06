@@ -14,10 +14,10 @@ class Restaurant(models.Model):
         max_length=100,
         blank=True,
     )
-    contact_phone = models.CharField(
+    contact_phone = PhoneNumberField(
         'контактный телефон',
-        max_length=50,
-        blank=True,
+        max_length=12,
+        validators=[MaxLengthValidator(12)],
     )
 
     class Meta:
