@@ -4,6 +4,7 @@ from django.shortcuts import reverse, redirect
 from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
+from foodcartapp.views import create_location
 
 from .models import Product
 from .models import ProductCategory
@@ -33,6 +34,10 @@ class RestaurantAdmin(admin.ModelAdmin):
     inlines = [
         RestaurantMenuItemInline
     ]
+
+    def save_model(self, request, obj, form, change):
+        create_location(obj.address)
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Product)
@@ -126,3 +131,7 @@ class OrderAdmin(admin.ModelAdmin):
         if 'next' in request.GET and url_has_allowed_host_and_scheme(request.GET['next'], ALLOWED_HOSTS):
             return redirect(request.GET['next'])
         return response
+
+    def save_model(self, request, obj, form, change):
+        create_location(obj.address)
+        super().save_model(request, obj, form, change)
