@@ -99,7 +99,7 @@ class RestaurantMenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         related_name='menu_items',
-        verbose_name="ресторан",
+        verbose_name='ресторан',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
@@ -166,6 +166,7 @@ class Order(models.Model):
         max_length=12,
         choices=STATUS,
         default='UNANSWERED',
+        db_index=True,
     )
     note = models.TextField(
         'комментарий к заказу',
@@ -177,21 +178,25 @@ class Order(models.Model):
         max_length=5,
         choices=PAYMENT_METHODS,
         default='CASH',
+        db_index=True,
     )
 
     created_at = models.DateTimeField(
         'создан в',
         default=timezone.now,
+        db_index=True,
     )
     called_at = models.DateTimeField(
         'принят в',
         blank=True,
         null=True,
+        db_index=True,
     )
     delivered_at = models.DateTimeField(
         'доставлен в',
         blank=True,
         null=True,
+        db_index=True,
     )
 
     restaurants = models.ManyToManyField(
