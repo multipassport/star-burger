@@ -1,6 +1,7 @@
 import requests
 
 from django.db import transaction
+from django.db.utils import IntegrityError
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import status
@@ -113,12 +114,13 @@ def register_order(request):
     for position in positions:
         position.price = position.calculate_actual_price()
 
-    OrderPosition.objects.bulk_create(positions)
-
     try:
         create_location(valid_data['address'])
     except IndexError:
+        transaction.rollback()
         return Response('Invalid address', status=status.HTTP_400_BAD_REQUEST)
+
+    OrderPosition.objects.bulk_create(positions)
 
     return Response(OrderSerializer(order).data)
 
@@ -156,6 +158,5 @@ def fetch_coordinates(place):
 
     found_places = response.json()['response']['GeoObjectCollection']['featureMember']
     most_relevant = found_places[0]
-
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(' ')
     return lat, lon
