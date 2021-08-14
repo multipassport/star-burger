@@ -1,7 +1,6 @@
 import requests
 
 from django.db import transaction
-from django.db.utils import IntegrityError
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import status
@@ -109,7 +108,6 @@ def register_order(request):
     ]
 
     products = [item['product'] for item in valid_data['products']]
-    # choose_restaurant(products, order)
 
     for position in positions:
         position.price = position.calculate_actual_price()

@@ -10,11 +10,11 @@ class Location(models.Model):
     )
     latitude = models.FloatField(
         'широта',
-        # null=True,
+        null=True,
     )
     longitude = models.FloatField(
         'долгота',
-        # null=True,
+        null=True,
     )
     request_date = models.DateTimeField(
         'дата запроса к геокодеру',
