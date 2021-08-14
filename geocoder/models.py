@@ -19,6 +19,7 @@ class Location(models.Model):
     request_date = models.DateTimeField(
         'дата запроса к геокодеру',
         default=timezone.now,
+        db_index=True,
     )
 
     class Meta():
