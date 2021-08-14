@@ -107,10 +107,11 @@ def register_order(request):
     ]
 
     products = [item['product'] for item in valid_data['products']]
-    choose_restaurant(products, order)
+    # choose_restaurant(products, order)
 
     for position in positions:
-        position.get_price()
+        position.price = position.calculate_actual_price()
+        # position.save()
 
     OrderPosition.objects.bulk_create(positions)
 
@@ -127,7 +128,7 @@ def choose_restaurant(products, order):
     first_restaurant, *others_restaurants = products_restaurants
     suitable_restaurants = first_restaurant.intersection(*others_restaurants)
 
-    order.restaurants.set(suitable_restaurants)
+    order.restaurant.set(suitable_restaurants)
     order.save()
 
 

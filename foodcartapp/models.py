@@ -240,8 +240,8 @@ class OrderPosition(models.Model):
         validators=[MinValueValidator(0)],
     )
 
-    def get_price(self):
-        self.price = self.quantity * self.product.price
+    def calculate_actual_price(self, save=True):
+        return self.quantity * self.product.price
 
     class Meta:
         verbose_name = 'позиция'
