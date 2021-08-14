@@ -129,7 +129,7 @@ class OrderPositionQuerySet(models.QuerySet):
     def get_total_cost(self):
         return (
             self.annotate(cost=models.Sum(models.F('positions__price')))
-            .prefetch_related('restaurants')
+            .prefetch_related('restaurant')
         )
 
 
@@ -177,7 +177,6 @@ class Order(models.Model):
         'Способ оплаты',
         max_length=5,
         choices=PAYMENT_METHODS,
-        default='CASH',
         db_index=True,
     )
 
@@ -199,10 +198,12 @@ class Order(models.Model):
         db_index=True,
     )
 
-    restaurants = models.ManyToManyField(
+    restaurant = models.ForeignKey(
         Restaurant,
         related_name='orders',
         verbose_name='ресторан',
+        on_delete=models.SET_NULL,
+        null=True,
     )
 
     objects = OrderPositionQuerySet.as_manager()
