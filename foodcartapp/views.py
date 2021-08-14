@@ -3,6 +3,7 @@ import requests
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
@@ -111,11 +112,13 @@ def register_order(request):
 
     for position in positions:
         position.price = position.calculate_actual_price()
-        # position.save()
 
     OrderPosition.objects.bulk_create(positions)
 
-    create_location(valid_data['address'])
+    try:
+        create_location(valid_data['address'])
+    except IndexError:
+        return Response('Invalid address', status=status.HTTP_400_BAD_REQUEST)
 
     return Response(OrderSerializer(order).data)
 
@@ -133,10 +136,10 @@ def choose_restaurant(products, order):
 
 
 def create_location(address):
-    latitude, longitude = fetch_coordinates(address)
     location, created = Location.objects.get_or_create(address=address)
     if not created:
         return None
+    latitude, longitude = fetch_coordinates(address)
     location.latitude = latitude
     location.longitude = longitude
     location.save()
