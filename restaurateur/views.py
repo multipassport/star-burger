@@ -8,7 +8,7 @@ from django.contrib.auth import views as auth_views
 from geopy import distance
 from operator import itemgetter
 
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 from geocoder.models import Location
 
 
@@ -32,7 +32,7 @@ class Login(forms.Form):
 class LoginView(View):
     def get(self, request, *args, **kwargs):
         form = Login()
-        return render(request, "login.html", context={
+        return render(request, 'login.html', context={
             'form': form
         })
 
@@ -47,10 +47,10 @@ class LoginView(View):
             if user:
                 login(request, user)
                 if user.is_staff:  # FIXME replace with specific permission
-                    return redirect("restaurateur:RestaurantView")
-                return redirect("start_page")
+                    return redirect('restaurateur:RestaurantView')
+                return redirect('start_page')
 
-        return render(request, "login.html", context={
+        return render(request, 'login.html', context={
             'form': form,
             'ivalid': True,
         })
@@ -83,7 +83,7 @@ def view_products(request):
             (product, orderer_availability)
         )
 
-    return render(request, template_name="products_list.html", context={
+    return render(request, template_name='products_list.html', context={
         'products_with_restaurants': products_with_restaurants,
         'restaurants': restaurants,
     })
@@ -91,7 +91,7 @@ def view_products(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_restaurants(request):
-    return render(request, template_name="restaurants_list.html", context={
+    return render(request, template_name='restaurants_list.html', context={
         'restaurants': Restaurant.objects.all(),
     })
 
@@ -116,12 +116,14 @@ def serialize_order(order):
         'address': order.address,
         'note': order.note,
     }
+
+    appropriate_restaurants = choose_restaurants(order)
     restaurants = [
         serialize_restaurant(order.address, restaurant)
-        for restaurant in order.restaurants.all()
+        for restaurant in appropriate_restaurants
     ]
     serialized_order['restaurants'] = sorted(
-        restaurants, key=itemgetter('distance')
+        restaurants, key=itemgetter('distance'),
     )
 
     return serialized_order
@@ -130,14 +132,29 @@ def serialize_order(order):
 def serialize_restaurant(order_address, restaurant):
     return {
         'name': restaurant.name,
-        'distance': (calculate_distance(order_address, restaurant.address))
+        'distance': calculate_distance(order_address, restaurant.address),
     }
 
 
 def calculate_distance(first_address, second_address):
     order_location, _ = Location.objects.get_or_create(address=first_address)
     restaurant_location, _ = Location.objects.get_or_create(address=second_address)
+
     order_coordinates = order_location.latitude, order_location.longitude
     restaurant_coordinates = restaurant_location.latitude, restaurant_location.longitude
+
     order_distance = distance.distance(order_coordinates, restaurant_coordinates).km
     return f'{order_distance:.3f} км'
+
+
+def choose_restaurants(order):
+    products_restaurants = []
+    for position in order.positions.prefetch_related('product'):
+        restaurants = [
+            item.restaurant for item
+            in RestaurantMenuItem.objects.filter(product__exact=position.product)
+        ]
+        products_restaurants.append(set(restaurants))
+
+    first_restaurant, *others_restaurants = products_restaurants
+    return first_restaurant.intersection(*others_restaurants)
