@@ -125,7 +125,7 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-class OrderPositionQuerySet(models.QuerySet):
+class OrderQuerySet(models.QuerySet):
     def get_total_cost(self):
         return (
             self.annotate(cost=models.Sum(models.F('positions__price')))
@@ -206,7 +206,7 @@ class Order(models.Model):
         null=True,
     )
 
-    objects = OrderPositionQuerySet.as_manager()
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'заказ'
