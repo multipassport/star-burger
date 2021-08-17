@@ -11,6 +11,8 @@ from operator import itemgetter
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 from geocoder.models import Location
 
+from django.db.models import F
+
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -98,13 +100,30 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.get_total_cost()
+    orders = (
+        Order.objects
+        .get_total_cost()
+        .annotate(products=F('positions__product'))
+    )
+
+    locations = get_locations(orders)
+
+    orders_with_products = {}
+    order_query = [(order, order.products) for order in orders]
+    for order, products in order_query:
+        orders_with_products.setdefault(order, []).append(products)
+
     return render(request, template_name='order_items.html', context={
-        'order_items': [serialize_order(order) for order in orders],
+        'order_items': [
+            serialize_order(order_with_products, locations)
+            for order_with_products in orders_with_products.items()
+        ],
     })
 
 
-def serialize_order(order):
+def serialize_order(order_with_products, locations):
+    order, products = order_with_products
+
     serialized_order = {
         'id': order.id,
         'status': order.get_status_display(),
@@ -117,11 +136,9 @@ def serialize_order(order):
         'note': order.note,
     }
 
-    appropriate_restaurants = choose_restaurants(order)
-    restaurants = [
-        serialize_restaurant(order.address, restaurant)
-        for restaurant in appropriate_restaurants
-    ]
+    order_location = locations.get(order.address)
+
+    restaurants = serialize_restaurants(products, locations, order_location)
     serialized_order['restaurants'] = sorted(
         restaurants, key=itemgetter('distance'),
     )
@@ -129,32 +146,47 @@ def serialize_order(order):
     return serialized_order
 
 
-def serialize_restaurant(order_address, restaurant):
+def serialize_restaurant(order_address, restaurant, restaurant_location):
     return {
-        'name': restaurant.name,
-        'distance': calculate_distance(order_address, restaurant.address),
+        'name': restaurant,
+        'distance': f'{distance.distance(order_address, restaurant_location).km:.3f}',
     }
 
 
-def calculate_distance(first_address, second_address):
-    order_location, _ = Location.objects.get_or_create(address=first_address)
-    restaurant_location, _ = Location.objects.get_or_create(address=second_address)
+def serialize_restaurants(products, locations, order_location):
+    restaurant, *others = [
+        RestaurantMenuItem.objects
+        .filter(product=product)
+        .values_list('restaurant') for product in products
+    ]
+    appropriate_restaurants = restaurant.intersection(*others)
 
-    order_coordinates = order_location.latitude, order_location.longitude
-    restaurant_coordinates = restaurant_location.latitude, restaurant_location.longitude
+    serialized_restaurants = []
+    for restaurant in Restaurant.objects.filter(id__in=appropriate_restaurants):
+        order_distance = distance.distance(
+            order_location, locations.get(restaurant.address)
+        ).km
 
-    order_distance = distance.distance(order_coordinates, restaurant_coordinates).km
-    return f'{order_distance:.3f} км'
+        serialized_restaurant = {
+            'name': restaurant.name,
+            'distance': f'{order_distance:.3f}'
+        } 
+        serialized_restaurants.append(serialized_restaurant)
+
+    return serialized_restaurants
 
 
-def choose_restaurants(order):
-    products_restaurants = []
-    for position in order.positions.prefetch_related('product'):
-        restaurants = [
-            item.restaurant for item
-            in RestaurantMenuItem.objects.filter(product__exact=position.product)
-        ]
-        products_restaurants.append(set(restaurants))
+def get_locations(orders):
+    order_addresses = {order.address for order in orders}
+    restaurants_addresses = {
+        restaurant.address for restaurant in Restaurant.objects.all()
+    }
+    all_addresses = order_addresses | restaurants_addresses
 
-    first_restaurant, *others_restaurants = products_restaurants
-    return first_restaurant.intersection(*others_restaurants)
+    locations = {
+        address: (
+            Location.objects.get(address=address).latitude,
+            Location.objects.get(address=address).longitude,
+        ) for address in all_addresses
+    }
+    return locations
