@@ -146,13 +146,6 @@ def serialize_order(order_with_products, locations):
     return serialized_order
 
 
-def serialize_restaurant(order_address, restaurant, restaurant_location):
-    return {
-        'name': restaurant,
-        'distance': f'{distance.distance(order_address, restaurant_location).km:.3f}',
-    }
-
-
 def serialize_restaurants(products, locations, order_location):
     restaurant, *others = [
         RestaurantMenuItem.objects
