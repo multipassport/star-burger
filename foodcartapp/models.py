@@ -129,7 +129,6 @@ class OrderQuerySet(models.QuerySet):
     def get_total_cost(self):
         return (
             self.annotate(cost=models.Sum(models.F('positions__price')))
-            .prefetch_related('restaurant')
         )
 
 
