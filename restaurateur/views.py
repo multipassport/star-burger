@@ -107,16 +107,18 @@ def view_orders(request):
         .get_total_cost()
         .annotate(products=F('positions__product'))
         .filter(status='UNANSWERED')
-        .select_related('restaurant')
     )
 
-    locations = get_locations(orders)
-
-    menu_items = (
+    menu_items_values = (
         RestaurantMenuItem.objects
         .filter(availability=True)
         .values('product', 'restaurant__name', 'restaurant__address')
     )
+    restaurants_addresses = {
+        item['restaurant__address'] for item in menu_items_values
+    }
+
+    locations = get_locations(orders, restaurants_addresses)
 
     orders_with_products = {}
     order_query = [(order, order.products) for order in orders]
@@ -125,13 +127,13 @@ def view_orders(request):
 
     return render(request, template_name='order_items.html', context={
         'order_items': [
-            serialize_order(order_with_products, locations, menu_items)
+            serialize_order(order_with_products, locations, menu_items_values)
             for order_with_products in orders_with_products.items()
         ],
     })
 
 
-def serialize_order(order_with_products, locations, menu_items):
+def serialize_order(order_with_products, locations, menu_items_values):
     order, products = order_with_products
 
     serialized_order = {
@@ -148,7 +150,9 @@ def serialize_order(order_with_products, locations, menu_items):
 
     order_location = locations.get(order.address)
 
-    restaurants = serialize_restaurants(products, locations, order_location, menu_items)
+    restaurants = serialize_restaurants(
+        products, locations, order_location, menu_items_values
+    )
     serialized_order['restaurants'] = sorted(
         restaurants, key=itemgetter('distance'),
     )
@@ -156,12 +160,12 @@ def serialize_order(order_with_products, locations, menu_items):
     return serialized_order
 
 
-def serialize_restaurants(products, locations, order_location, menu_items):
+def serialize_restaurants(products, locations, order_location, menu_items_values):
     restaurants_and_addresses = []
     for product in products:
         restaurant_and_address = {
             (item['restaurant__name'], item['restaurant__address'])
-            for item in menu_items if product == item['product']
+            for item in menu_items_values if product == item['product']
         }
         restaurants_and_addresses.append(restaurant_and_address)
 
@@ -185,12 +189,9 @@ def serialize_restaurants(products, locations, order_location, menu_items):
     return serialized_restaurants
 
 
-def get_locations(orders):
+def get_locations(orders, restaurants_addresses):
     order_addresses = {order.address for order in orders}
 
-    restaurants_addresses = set(
-        Restaurant.objects.values_list('address', flat=True)
-    )
     all_addresses = order_addresses | restaurants_addresses
 
     locations = {
