@@ -177,6 +177,7 @@ class Order(models.Model):
         max_length=5,
         choices=PAYMENT_METHODS,
         db_index=True,
+        blank=True,
     )
 
     created_at = models.DateTimeField(
@@ -203,6 +204,7 @@ class Order(models.Model):
         verbose_name='ресторан',
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
     )
 
     objects = OrderQuerySet.as_manager()
