@@ -1,6 +1,6 @@
 import requests
 
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import status
@@ -11,6 +11,10 @@ from rest_framework.serializers import ModelSerializer
 from .models import Product, Order, OrderPosition, RestaurantMenuItem
 from geocoder.models import Location
 from star_burger.settings import YANDEX_GEOCODE_APIKEY
+
+
+class InvalidAdressError(Exception):
+    """Invalid address was entered"""
 
 
 class OrderPositionSerializer(ModelSerializer):
@@ -107,15 +111,13 @@ def register_order(request):
         for fields in valid_data['products']
     ]
 
-    products = [item['product'] for item in valid_data['products']]
-
     for position in positions:
         position.total_price = position.calculate_actual_price()
 
     try:
         create_location(valid_data['address'])
-    except IndexError:
-        transaction.rollback()
+    except InvalidAdressError:
+        transaction.set_rollback(True)
         return Response('Invalid address', status=status.HTTP_400_BAD_REQUEST)
 
     OrderPosition.objects.bulk_create(positions)
@@ -158,6 +160,9 @@ def fetch_coordinates(place):
     response.raise_for_status()
 
     found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-    most_relevant = found_places[0]
+    try:
+        most_relevant = found_places[0]
+    except IndexError:
+        raise InvalidAdressError('Address is not found')
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(' ')
     return lat, lon
