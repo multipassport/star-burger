@@ -103,6 +103,7 @@ def view_orders(request):
     orders = (
         Order.objects
         .get_total_cost()
+        .prefetch_related('restaurant')
         .annotate(products=F('positions__product'))
     )
 

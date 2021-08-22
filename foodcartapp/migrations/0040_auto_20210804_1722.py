@@ -8,8 +8,8 @@ def fill_price_field(apps, schema_editor):
     positions = OrderPosition.objects.all()
 
     for position in positions.iterator():
-        if not position.price:
-            position.price = position.quantity * position.product.price
+        if not position.total_price:
+            position.total_price = position.quantity * position.product.price
 
     positions.bulk_update(positions, ['price'])
 

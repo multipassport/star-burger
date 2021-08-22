@@ -110,7 +110,7 @@ def register_order(request):
     products = [item['product'] for item in valid_data['products']]
 
     for position in positions:
-        position.price = position.calculate_actual_price()
+        position.total_price = position.calculate_actual_price()
 
     try:
         create_location(valid_data['address'])
