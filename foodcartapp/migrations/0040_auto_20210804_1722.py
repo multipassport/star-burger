@@ -5,11 +5,11 @@ from django.db import migrations
 
 def fill_price_field(apps, schema_editor):
     OrderPosition = apps.get_model('foodcartapp', 'OrderPosition')
-    positions = OrderPosition.objects.all()
+    positions = OrderPosition.objects.select_related('product')
 
     for position in positions.iterator():
-        if not position.total_price:
-            position.total_price = position.quantity * position.product.price
+        if not position.price:
+            position.price = position.quantity * position.product.price
 
     positions.bulk_update(positions, ['price'])
 
