@@ -1,3 +1,5 @@
+import functools
+
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -103,11 +105,18 @@ def view_orders(request):
     orders = (
         Order.objects
         .get_total_cost()
-        .prefetch_related('restaurant')
         .annotate(products=F('positions__product'))
+        .filter(status='UNANSWERED')
+        .select_related('restaurant')
     )
 
     locations = get_locations(orders)
+
+    menu_items = (
+        RestaurantMenuItem.objects
+        .filter(availability=True)
+        .values('product', 'restaurant__name', 'restaurant__address')
+    )
 
     orders_with_products = {}
     order_query = [(order, order.products) for order in orders]
@@ -116,13 +125,13 @@ def view_orders(request):
 
     return render(request, template_name='order_items.html', context={
         'order_items': [
-            serialize_order(order_with_products, locations)
+            serialize_order(order_with_products, locations, menu_items)
             for order_with_products in orders_with_products.items()
         ],
     })
 
 
-def serialize_order(order_with_products, locations):
+def serialize_order(order_with_products, locations, menu_items):
     order, products = order_with_products
 
     serialized_order = {
@@ -139,7 +148,7 @@ def serialize_order(order_with_products, locations):
 
     order_location = locations.get(order.address)
 
-    restaurants = serialize_restaurants(products, locations, order_location)
+    restaurants = serialize_restaurants(products, locations, order_location, menu_items)
     serialized_order['restaurants'] = sorted(
         restaurants, key=itemgetter('distance'),
     )
@@ -147,22 +156,28 @@ def serialize_order(order_with_products, locations):
     return serialized_order
 
 
-def serialize_restaurants(products, locations, order_location):
-    restaurant, *others = [
-        RestaurantMenuItem.objects
-        .filter(product=product)
-        .values_list('restaurant') for product in products
-    ]
-    appropriate_restaurants = restaurant.intersection(*others)
+def serialize_restaurants(products, locations, order_location, menu_items):
+    restaurants_and_addresses = []
+    for product in products:
+        restaurant_and_address = {
+            (item['restaurant__name'], item['restaurant__address'])
+            for item in menu_items if product == item['product']
+        }
+        restaurants_and_addresses.append(restaurant_and_address)
+
+    appropriate_restaurants_and_addresses = functools.reduce(
+        set.intersection,
+        restaurants_and_addresses,
+    )
 
     serialized_restaurants = []
-    for restaurant in Restaurant.objects.filter(id__in=appropriate_restaurants):
+    for name, address in appropriate_restaurants_and_addresses:
         order_distance = distance.distance(
-            order_location, locations.get(restaurant.address)
+            order_location, locations.get(address)
         ).km
 
         serialized_restaurant = {
-            'name': restaurant.name,
+            'name': name,
             'distance': f'{order_distance:.3f}'
         } 
         serialized_restaurants.append(serialized_restaurant)
@@ -172,9 +187,10 @@ def serialize_restaurants(products, locations, order_location):
 
 def get_locations(orders):
     order_addresses = {order.address for order in orders}
-    restaurants_addresses = {
-        restaurant.address for restaurant in Restaurant.objects.all()
-    }
+
+    restaurants_addresses = set(
+        Restaurant.objects.values_list('address', flat=True)
+    )
     all_addresses = order_addresses | restaurants_addresses
 
     locations = {
