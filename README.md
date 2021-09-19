@@ -54,9 +54,19 @@ YANDEX_GEOCODE_APIKEY=ваш_ключ_апи_яндекс
 
 ```sh
 ROLLBAR_ACCESS_TOKEN=токен_доступа_rollbar
-
 ```
 
+```sh
+POSTGRESQL_NAME=имя_бд_postgresql
+```
+
+```sh
+POSTGRESQL_USER=имя_юзера_postgresql
+```
+
+```sh
+POSTGRESQL_PASSWORD=пароль_пользователя_postgresql
+```
 
 Установите зависимости в виртуальное окружение:
 ```sh

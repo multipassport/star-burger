@@ -86,9 +86,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('POSTGRESQL_NAME', 'starburger'),
+        'USER': env('POSTGRESQL_USER', 'admin'),
+        'PASSWORD': env('POSTGRESQL_PASSWORD', 'FuwTzi47aV1Ah+SwHDMKMJrkKHrqxvxa2eu+LeN6B9k='),
+        'HOST': 'localhost',
+        'PORT': '',
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
