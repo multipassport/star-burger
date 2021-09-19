@@ -50,6 +50,10 @@ python -m venv venv
 Создайте файл `.env` с [переменной](https://developer.tech.yandex.ru/services/)
 ```sh
 YANDEX_GEOCODE_APIKEY=ваш_ключ_апи_яндекс
+```
+
+```sh
+ROLLBAR_ACCESS_TOKEN=токен_доступа_rollbar
 
 ```
 
