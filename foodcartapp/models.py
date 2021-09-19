@@ -16,7 +16,7 @@ class Restaurant(models.Model):
     )
     contact_phone = PhoneNumberField(
         'контактный телефон',
-        max_length=12,
+        max_length=20,
         validators=[MaxLengthValidator(12)],
     )
 
@@ -152,7 +152,7 @@ class Order(models.Model):
     )
     phonenumber = PhoneNumberField(
         'номер телефона',
-        max_length=12,
+        max_length=20,
         validators=[MaxLengthValidator(12)]
     )
     address = models.CharField(
