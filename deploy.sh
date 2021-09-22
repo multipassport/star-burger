@@ -19,7 +19,7 @@ sudo systemctl reload nginx
 
 export $(cat .env | sed 's/#.*//g' | xargs)
 curl -H 'X-Rollbar-Access-Token: '${ROLLBAR_ACCESS_TOKEN} \
--X POST -d '{"environment": "production", "revision": "$(git rev-parse HEAD)"}' \
+-X POST -d '{"environment": "production", "revision": "'"$(git rev-parse HEAD)"'"}' \
 https://api.rollbar.com/api/1/deploy
 
 echo 'Deploy finished'
