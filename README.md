@@ -48,25 +48,15 @@ python -m venv venv
 - MacOS/Linux: `source venv/bin/activate`
 
 Создайте файл `.env` с [переменной](https://developer.tech.yandex.ru/services/)
-```sh
-YANDEX_GEOCODE_APIKEY=ваш_ключ_апи_яндекс
-```
 
-```sh
-ROLLBAR_ACCESS_TOKEN=токен_доступа_rollbar
-```
-
-```sh
-POSTGRESQL_NAME=имя_бд_postgresql
-```
-
-```sh
-POSTGRESQL_USER=имя_юзера_postgresql
-```
-
-```sh
-POSTGRESQL_PASSWORD=пароль_пользователя_postgresql
-```
+- `DEBUG` — дебаг-режим. Поставьте `False`.
+* `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+- `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию, **замените на своё**.
+* `YANDEX_GEOCODE_APIKEY` — ваш_ключ_апи_яндекс
+* `ROLLBAR_ACCESS_TOKEN` — токен_доступа_rollbar
+* `POSTGRESQL_NAME` — имя_бд_postgresql
+* `POSTGRESQL_USER` — имя_юзера_postgresql
+* `POSTGRESQL_PASSWORD` — пароль_пользователя_postgresql
 
 Установите зависимости в виртуальное окружение:
 ```sh
@@ -152,17 +142,17 @@ Parcel будет следить за файлами в каталоге `bundle
 
 ## Как запустить prod-версию сайта
 
-Собрать фронтенд:
+Заполните файл .env, как указано выше, и выполните следующие команды:
 
 ```sh
-parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+cd /opt/
+git clone git@github.com:multipassport/star-burger.git
+./deploy.sh
 ```
 
-Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
+## Предварительный просмотр
 
-- `DEBUG` — дебаг-режим. Поставьте `False`.
-- `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию, **замените на своё**.
-- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+Сайт доступен для просмотра по адресу https://multipasport.xyz/
 
 ## Цели проекта
 
