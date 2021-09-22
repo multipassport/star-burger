@@ -153,6 +153,8 @@ git clone git@github.com:multipassport/star-burger.git
 ## Предварительный просмотр
 
 Сайт доступен для просмотра по адресу https://multipasport.xyz/
+IP сервера `164.90.181.187`
+Имя пользователя `root`
 
 ## Цели проекта
 
