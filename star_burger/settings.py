@@ -10,10 +10,12 @@ env = Env()
 env.read_env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 SECRET_KEY = env('SECRET_KEY', 'etirgvonenrfnoerngorenogneongg334g')
+
 DEBUG = env.bool('DEBUG', True)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
@@ -91,8 +93,8 @@ DATABASES = {
         'NAME': env('POSTGRESQL_NAME', 'starburger'),
         'USER': env('POSTGRESQL_USER', 'admin'),
         'PASSWORD': env('POSTGRESQL_PASSWORD', 'FuwTzi47aV1Ah+SwHDMKMJrkKHrqxvxa2eu+LeN6B9k='),
-        'HOST': 'localhost',
-        'PORT': '',
+        'HOST': env('POSTGRESQL_HOST', 'localhost'),
+        'PORT': env('POSTGRESQL_PORT', '5432'),
     }
 }
 
