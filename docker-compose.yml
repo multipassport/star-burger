@@ -8,17 +8,18 @@ services:
     command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_volume:/usr/src/app/staticfiles
+      - app:/usr/src/app
+      - media_volume:/usr/src/app/media
     expose:
       - 8000
     env_file:
       - ./.env
     depends_on:
       - db
+      - nginx
 
   db:
     image: postgres:12.0-alpine
-    environment:
-      - POSTGRES_PASSWORD=password
     env_file:
       - ./.env
     volumes:
@@ -28,11 +29,25 @@ services:
     build: ./nginx
     volumes:
       - static_volume:/usr/src/app/staticfiles
+      - media_volume:/usr/src/app/media
     ports:
       - 1337:80
     depends_on:
-      - web
+      - parcel
+
+  parcel:
+    build:
+      context: .
+      dockerfile: Dockerfile.parcel
+    command: parcel watch bundles-src/index.js --dist-dir bundles --public-url="./"
+    volumes:
+      - static_volume:/usr/src/app/staticfiles
+      - app:/usr/src/app
+
+
 
 volumes:
   postgres_data:
   static_volume:
+  app:
+  media_volume:
