@@ -57,6 +57,11 @@ python -m venv venv
 * `POSTGRESQL_NAME` — имя_бд_postgresql
 * `POSTGRESQL_USER` — имя_юзера_postgresql
 * `POSTGRESQL_PASSWORD` — пароль_пользователя_postgresql
+* `POSTGRESQL_HOST` — адрес базы данных
+* `POSTGRESQL_PORT` — порт базы даных
+* `POSTGRES_USER` — имя пользователя базы данных PostgreSQL, необходимое для ее создания 
+* `POSTGRES_PASSWORD`— пароль базы данных PostgreSQL, необходимый для ее создания 
+* `POSTGRES_DB`— имя базы данных PostgreSQL, необходимое для ее создания 
 
 Установите зависимости в виртуальное окружение:
 ```sh
@@ -148,6 +153,32 @@ Parcel будет следить за файлами в каталоге `bundle
 cd /opt/
 git clone git@github.com:multipassport/star-burger.git
 ./deploy.sh
+```
+
+## Запуск с docker-compose
+
+* Установите [Docker](https://docs.docker.com/engine/install/)
+* Активируйте виртуальное окружение
+```
+virtualenv venv
+source venv/bin/activate
+```
+* Установите docker-compose
+```
+pip install docker-compose
+```
+* Запустите сборку Docker-образа командой
+```
+docker-compose up --build -d
+```
+* Проверьте логи сборки, чтобы удостовериться, что образ собрался
+```
+docker-compose logs -f
+```
+* Затем запустите для сборки статики и миграции БД:
+```
+docker-compose exec web python manage.py collectstatic --no-input --clear
+docker-compose exec web python manage.py migrate --no-input
 ```
 
 ## Предварительный просмотр
