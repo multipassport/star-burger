@@ -5,10 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn star_burger.wsgi:application -w 3 -b 0.0.0.0:8000 --enable-stdio-inheritance
     volumes:
       - static_volume:/usr/src/app/staticfiles
-      - app:/usr/src/app
       - media_volume:/usr/src/app/media
     expose:
       - 8000
@@ -31,7 +30,7 @@ services:
       - static_volume:/usr/src/app/staticfiles
       - media_volume:/usr/src/app/media
     ports:
-      - 1337:80
+      - 80:80
     depends_on:
       - parcel
 
@@ -42,12 +41,8 @@ services:
     command: parcel watch bundles-src/index.js --dist-dir bundles --public-url="./"
     volumes:
       - static_volume:/usr/src/app/staticfiles
-      - app:/usr/src/app
-
-
 
 volumes:
   postgres_data:
   static_volume:
-  app:
   media_volume:
